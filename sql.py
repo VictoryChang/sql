@@ -23,6 +23,21 @@ class SQL(object):
         print('Created Relation with name: {!r}'.format(name))
         return True
 
+    def drop_table(self, name):
+        """
+        Drop a relation from the database
+
+        :param Text name: Relation name
+        :return: True/False whether a relation existed and was dropped
+        """
+        if name in self.relations:
+            self.relations.pop(name)
+            print('Relation with name {!r} was dropped.'.format(name))
+            return True
+
+        print('Relation {!r} cannot be dropped it does not exist.'.format(name))
+        return False
+
     def show_tables(self):
         """
         List all of the available tables generated during this execution
@@ -54,9 +69,13 @@ def parse_query(query):
         operation = 'CREATE'
         relation_name = match.group(1)
 
-    show_pattern = '^SHOW TABLES;$'
-    match = re.search(show_pattern, query)
+    create_pattern = '^DROP TABLE ([a-zA-Z0-9]+);$'
+    match = re.search(create_pattern, query)
     if match:
+        operation = 'DROP'
+        relation_name = match.group(1)
+
+    if query == 'SHOW TABLES;':
         operation = 'SHOW TABLES'
 
     return operation, relation_name
@@ -75,6 +94,9 @@ def main():
         if operation == 'CREATE':
             sql_object.create_table(name=relation_name)
 
+        if operation == 'DROP':
+            sql_object.drop_table(name=relation_name)
+
         if operation == 'SHOW TABLES':
             sql_object.show_tables()
 
@@ -84,3 +106,27 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+'''
+Regression Tests to Add
+1. DROP Movies -> None, QUIT
+DROP TABLE Movies;
+quit
+
+2. CREATE Movies, Drop Movies, QUIT
+CREATE TABLE Movies ();
+SHOW TABLES;
+DROP TABLE Movies;
+quit
+
+3. CREATE Movies, Drop Stars -> None ,QUIT
+CREATE TABLE Movies ();
+SHOW TABLES;
+DROP TABLE Stars;
+quit
+
+4. SHOW TABLES -> Empty, QUIT
+SHOW TABLES;
+quit
+'''

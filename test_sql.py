@@ -1,4 +1,6 @@
 import mock
+import pytest
+
 from sql import main, parse_query, Relation, SQL
 
 
@@ -36,9 +38,16 @@ def test_sql_create_table_attributes():
     assert relation_object.attributes == attributes
 
 
-def test_relation_instantiation():
-    relation_object = Relation(name='test-relation')
-    assert relation_object.name == 'test-relation'
+def test_sql_drop_table():
+    sql_object = SQL()
+    assert len(sql_object.relations) == 0
+    does_exist_and_removed = sql_object.drop_table('Non-existing Relation')
+    assert not does_exist_and_removed
+
+    sql_object.create_table('Movies')
+    assert len(sql_object.relations) == 1
+    does_exist_and_removed = sql_object.drop_table('Movies')
+    assert does_exist_and_removed
 
 
 def test_relation_without_attributes():
@@ -66,22 +75,21 @@ def test_main_quit(mock_input):
     assert response == 'exit SQL'
 
 
-def test_parse_query_create_table():
-    query = 'CREATE TABLE Movies ();'
-    operation, relation_name = parse_query(query)
-    assert operation == 'CREATE'
-    assert relation_name == 'Movies'
+@pytest.mark.parametrize(
+    'query, operation, relation_name', [
+        ('CREATE TABLE Movies ();', 'CREATE', 'Movies'),
+        ('SHOW TABLES;', 'SHOW TABLES', None),
+        ('DROP TABLE Movies;', 'DROP', 'Movies')
+    ]
+)
+def test_parse_query(query, operation, relation_name):
+    actual_operation, actual_relation_name = parse_query(query)
+    assert actual_operation == operation
+    assert actual_relation_name == relation_name
 
 
 def test_parse_query_unsupported_operation():
     query = 'UNSUPPORTED-OP TABLE Movies ();'
     operation, relation_name = parse_query(query)
     assert operation is None
-    assert relation_name is None
-
-
-def test_parse_query_show_table():
-    query = 'SHOW TABLES;'
-    operation, relation_name = parse_query(query)
-    assert operation == 'SHOW TABLES'
     assert relation_name is None
