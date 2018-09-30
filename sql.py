@@ -1,5 +1,22 @@
 import re
 
+
+class DataType(object):
+    CHAR = 'string'
+    BOOLEAN = 'boolean'
+    INTEGER = 'integer'
+    FLOAT = 'float'
+    DECIMAL = 'decimal'
+    DATE = 'date'
+    TIME = 'time'
+
+
+class BoolType(object):
+    TRUE = 'TRUE'
+    FALSE = 'FALSE'
+    UNKNOWN = 'UNKNOWN'
+
+
 class SQL(object):
     """
     A class which simulates a single SQL database
@@ -48,9 +65,25 @@ class SQL(object):
 
 
 class Relation(object):
+    """
+    A class which represents a single SQL relation (table)
+    """
     def __init__(self, name, attributes=None):
         self.name = name
-        self.attributes = attributes
+        self.attributes = attributes or []
+
+    def __repr__(self):
+        return self.schema
+
+    @property
+    def schema(self):
+        attributes = ', '.join([field['name'] for field in self.attributes])
+        return '{}({})'.format(self.name, attributes)
+
+    @property
+    def schema_domain(self):
+        attributes = ', '.join(['{}:{}'.format(field['name'], field['type']) for field in self.attributes])
+        return '{}({})'.format(self.name, attributes)
 
 
 def parse_query(query):
@@ -69,8 +102,8 @@ def parse_query(query):
         operation = 'CREATE'
         relation_name = match.group(1)
 
-    create_pattern = '^DROP TABLE ([a-zA-Z0-9]+);$'
-    match = re.search(create_pattern, query)
+    drop_pattern = '^DROP TABLE ([a-zA-Z0-9]+);$'
+    match = re.search(drop_pattern, query)
     if match:
         operation = 'DROP'
         relation_name = match.group(1)
@@ -99,9 +132,6 @@ def main():
 
         if operation == 'SHOW TABLES':
             sql_object.show_tables()
-
-
-    return 'completed'
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 import mock
 import pytest
 
-from sql import main, parse_query, Relation, SQL
+from sql import DataType, main, parse_query, Relation, SQL
 
 
 def test_sql_instantiation():
@@ -53,19 +53,40 @@ def test_sql_drop_table():
 def test_relation_without_attributes():
     relation_object = Relation(name='Movies')
     assert relation_object.name == 'Movies'
-    assert relation_object.attributes is None
+    assert relation_object.attributes == []
+    assert relation_object.schema == 'Movies()'
+    assert relation_object.schema_domain == 'Movies()'
 
 
 def test_relation_with_attributes():
-    attributes = {
-        'title': '',
-        'year': '',
-        'length': 0,
-        'genre': ''
-    }
+    attributes = [
+            {
+                'name': 'title',
+                'type': DataType.CHAR
+            },
+            {
+                'name': 'year',
+                'type': DataType.INTEGER
+            },
+            {
+                'name': 'length',
+                'type': DataType.INTEGER
+            },
+            {
+                'name': 'genre',
+                'type': DataType.CHAR
+            }
+        ]
+
     relation_object = Relation(name='Movies', attributes=attributes)
     assert relation_object.name == 'Movies'
     assert relation_object.attributes == attributes
+
+    representation = relation_object.__repr__()
+    assert representation == 'Movies(title, year, length, genre)'
+
+    assert relation_object.schema == relation_object.__repr__()
+    assert relation_object.schema_domain == 'Movies(title:string, year:integer, length:integer, genre:string)'
 
 
 @mock.patch('builtins.input')
