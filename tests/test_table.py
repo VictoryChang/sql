@@ -1,6 +1,6 @@
 import pytest
 
-from follow_w3 import parse_query
+from sql.table import parse_query
 
 @pytest.mark.parametrize(
     'query, projection, table_name', [

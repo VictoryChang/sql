@@ -1,4 +1,4 @@
-from parser import MySQL, parse_query
+from sql.database import MySQL, parse_query
 
 
 def test_parse_query():
