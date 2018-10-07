@@ -4,11 +4,11 @@ from sql.table import parse_query
 
 @pytest.mark.parametrize(
     'query, projection, table_name', [
-        ('SELECT column1, column2 FROM table_name;', 'column1, column2', 'table_name'),
         ('SELECT * FROM table_name;', '*', 'table_name'),
-        ('SELECT CustomerName, City FROM Customers;', 'CustomerName, City', 'Customers'),
         ('SELECT * FROM Customers;', '*', 'Customers'),
-        ('SELECT Country FROM Customers;', 'Country', 'Customers')
+        ('SELECT column1, column2 FROM table_name;', 'column1, column2', 'table_name'),
+        ('SELECT Country FROM Customers;', 'Country', 'Customers'),
+        ('SELECT CustomerName, City FROM Customers;', 'CustomerName, City', 'Customers'),
     ])
 def test_select(query, projection, table_name):
     result = parse_query(query)
@@ -17,7 +17,7 @@ def test_select(query, projection, table_name):
     assert result['table_name'] == table_name
     assert result['condition'] is None
     assert result['order_by'] is None
-    assert result['order_by_sort'] is None
+    assert result['order_by_sort'] == 'ASC'
 
 
 @pytest.mark.parametrize(
@@ -32,7 +32,7 @@ def test_select_distinct(query, projection, table_name):
     assert result['table_name'] == table_name
     assert result['condition'] is None
     assert result['order_by'] is None
-    assert result['order_by_sort'] is None
+    assert result['order_by_sort'] == 'ASC'
 
 
 def test_alternatives():
@@ -42,114 +42,49 @@ def test_alternatives():
     ORDER BY Country ASC, CustomerName DESC;
     '''
 
-def test_where_clause():
+@pytest.mark.parametrize(
+    'query, projection, table_name, condition', [
+        ('SELECT column1, column2 FROM table_name WHERE condition;', 'column1, column2', 'table_name', 'condition'),
+        ('SELECT * FROM Customers WHERE Country="Mexico"', '*', 'Customers', 'Country="Mexico"'),
+        ('SELECT * FROM Customers WHERE CustomerID=1;', '*', 'Customers', 'CustomerID=1')
+    ])
+def test_where_clause(query, projection, table_name, condition):
     query = 'SELECT column1, column2 FROM table_name WHERE condition;'
     result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == 'column1, column2'
-    assert result['table_name'] == 'table_name'
-    assert result['condition'] == 'condition'
     assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-    query = 'SELECT * FROM Customers WHERE Country="Mexico";'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] == 'Country="Mexico"'
-    assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-    query = 'SELECT * FROM Customers WHERE CustomerID=1;'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] == 'CustomerID=1'
-    assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-
-def test_where_clause_and_or_not():
-    query = 'SELECT * FROM Customers WHERE Country="Germany" AND City="Berlin";'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] == 'Country="Germany" AND City="Berlin"'
-    assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-    query = 'SELECT * FROM Customers WHERE City="Berlin" OR City="München";'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] == 'City="Berlin" OR City="München"'
-    assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-    query = 'SELECT * FROM Customers WHERE NOT Country="Germany";'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] == 'NOT Country="Germany"'
-    assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-    query = 'SELECT * FROM Customers WHERE Country="Germany" AND (City="Berlin" OR City="München");'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] == 'Country="Germany" AND (City="Berlin" OR City="München")'
-    assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-    query = 'SELECT * FROM Customers WHERE NOT Country="Germany" AND NOT Country="USA";'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] == 'NOT Country="Germany" AND NOT Country="USA"'
-    assert result['order_by'] is None
-    assert result['order_by_sort'] is None
-
-def test_order_by():
-    query = 'SELECT * FROM Customers ORDER BY Country;'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] is None
-    assert result['order_by'] == 'Country'
-
-    query = 'SELECT * FROM Customers ORDER BY Country DESC;'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] is None
-    assert result['order_by'] == 'Country'
-    assert result['order_by_sort'] == 'DESC'
-
-    query = 'SELECT * FROM Customers ORDER BY Country ASC;'
-    result = parse_query(query)
-    assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] is None
-    assert result['order_by'] == 'Country'
     assert result['order_by_sort'] == 'ASC'
 
-    query = 'SELECT * FROM Customers ORDER BY Country, CustomerName;'
+
+@pytest.mark.parametrize(
+    'query, projection, table_name, condition', [
+        ('SELECT * FROM Customers WHERE Country="Germany" AND City="Berlin";', '*', 'Customers' ,'Country="Germany" AND City="Berlin"'),
+        ('SELECT * FROM Customers WHERE City="Berlin" OR City="München";', '*', 'Customers', 'City="Berlin" OR City="München"'),
+        ('SELECT * FROM Customers WHERE NOT Country="Germany";', '*', 'Customers', 'NOT Country="Germany"'),
+        ('SELECT * FROM Customers WHERE Country="Germany" AND (City="Berlin" OR City="München");', '*', 'Customers', 'Country="Germany" AND (City="Berlin" OR City="München")'),
+        ('SELECT * FROM Customers WHERE NOT Country="Germany" AND NOT Country="USA";', '*', 'Customers', 'NOT Country="Germany" AND NOT Country="USA"')
+    ])
+def test_where_clause_and_or_not(query, projection, table_name, condition):
     result = parse_query(query)
     assert not result['is_distinct']
-    assert result['projection'] == '*'
-    assert result['table_name'] == 'Customers'
-    assert result['condition'] is None
-    assert result['order_by'] == 'Country, CustomerName'
-    assert result['order_by_sort'] is None
+    assert result['projection'] == projection
+    assert result['table_name'] == table_name
+    assert result['condition'] == condition
+    assert result['order_by'] is None
+    assert result['order_by_sort'] == 'ASC'
 
+
+@pytest.mark.parametrize(
+    'query, projection, table_name, order_by, order_by_sort', [
+        ('SELECT * FROM Customers ORDER BY Country;', '*', 'Customers', 'Country', 'ASC'),
+        ('SELECT * FROM Customers ORDER BY Country DESC;', '*', 'Customers', 'Country', 'DESC'),
+        ('SELECT * FROM Customers ORDER BY Country ASC;', '*', 'Customers', 'Country', 'ASC'),
+        ('SELECT * FROM Customers ORDER BY Country, CustomerName;', '*', 'Customers', 'Country, CustomerName', 'ASC')
+    ])
+def test_order_by(query, projection, table_name, order_by, order_by_sort):
+    result = parse_query(query)
+    assert not result['is_distinct']
+    assert result['projection'] == projection
+    assert result['table_name'] == table_name
+    assert result['condition'] is None
+    assert result['order_by'] == order_by
+    assert result['order_by_sort'] == order_by_sort

@@ -37,6 +37,7 @@ def parse_query(query_string):
         table_name = match.group(2)
         order_by = match.group(3)
         order_by_sort = match.group(4)
+        print(order_by_sort)
 
     match_pattern = '^SELECT ([\w*, \.]+) FROM (\w+) WHERE (Country=\"Mexico\");$'
     match = re.search(match_pattern, query_string)
@@ -51,5 +52,5 @@ def parse_query(query_string):
         'is_distinct': is_distinct,
         'condition': condition,
         'order_by': order_by,
-        'order_by_sort': order_by_sort
+        'order_by_sort': order_by_sort if order_by_sort is not None else 'ASC'
     }

@@ -1,6 +1,9 @@
+import pytest
+
 from sql.database import MySQL, parse_query
 
 
+@pytest.mark.parametrize()
 def test_parse_query():
     query_string = 'SHOW DATABASES;'
     op, level, name, attributes = parse_query(query_string)
